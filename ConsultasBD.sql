@@ -1,36 +1,92 @@
--- ----------------------------------CONSULTAS DE SELECCION (SELECT)----------------------------------
+-- ============================================================================
+-- SCRIPT DE CONSULTAS DE SELECCIÓN (SELECT) Y MANIPULACIÓN (DML)
+-- ============================================================================
 
--- Listar todas las pólizas Vigentes: Obtiene el ID, fecha de fin y el cliente de todas las pólizas cuyo estado es 'VIGENTE'.
-SELECT P.poliza_id, P.fecha_fin, C.nombre, C.apellido FROM POLIZA P JOIN CLIENTE C ON P.id_cliente = C.cliente_id WHERE P.estado = 'VIGENTE';
+USE siseg_db;
 
--- Buscar Bienes Asegurados por Marca: Obtiene todos los electrodomésticos asegurados de la marca 'Oster'.
-SELECT bien_id, nombre, modelo, estado FROM BIEN WHERE marca = 'Oster';
+-- ----------------------------------------------------------------------------
+-- 1. CONSULTAS DE SELECCIÓN (DQL)
+-- ----------------------------------------------------------------------------
 
--- Detalle Completo de una Póliza Específica: Muestra todos los datos de la póliza 8001: cliente, bien, tipo y vigencia.
-SELECT C.nombre AS Cliente, B.nombre AS BienAsegurado, P.tipo, P.fecha_inicio, P.fecha_fin FROM POLIZA P JOIN CLIENTE C ON P.id_cliente = C.cliente_id JOIN BIEN B ON P.id_bien = B.bien_id WHERE P.poliza_id = 8001;
-
--- Pólizas Pendientes del Cliente Marcos Fernandez: Busca todas las pólizas con estado 'PENDIENTE' que pertenecen a un cliente específico.
-SELECT P.poliza_id, B.nombre AS BienAsegurado FROM POLIZA P JOIN CLIENTE C ON P.id_cliente = C.cliente_id JOIN BIEN B ON P.id_bien = B.bien_id WHERE C.nombre = 'Marcos' AND C.apellido = 'Fernandez' AND P.estado = 'PENDIENTE';
-SELECT P.poliza_id, B.nombre AS BienAsegurado FROM POLIZA P JOIN CLIENTE C ON P.id_cliente = C.cliente_id JOIN BIEN B ON P.id_bien = B.bien_id WHERE C.nombre = 'Julia' AND C.apellido = 'Ramirez' AND P.estado = 'PENDIENTE';
-
--- Bienes con Estado 'Nuevo': Cuenta cuántos bienes asegurados tienen la condición de 'Nuevo'.
-SELECT COUNT(bien_id) AS TotalNuevos FROM BIEN WHERE estado = 'Nuevo';
-
--- Listar el nombre completo del cliente, el nombre del bien asegurado, el tipo de póliza y su estado, uniendo las tablas CLIENTE, POLIZA y BIEN.
-SELECT C.nombre, C.apellido, B.nombre AS NombreBien, P.tipo AS TipoPoliza, P.estado FROM POLIZA P JOIN CLIENTE C ON P.id_cliente = C.cliente_id JOIN BIEN B ON P.id_bien = B.bien_id;
+-- Consulta A: Listar todas las pólizas con estado 'VIGENTE' junto a los datos del cliente asignado
+SELECT 
+    P.poliza_id, 
+    P.fecha_fin, 
+    C.nombre AS Cliente_Nombre, 
+    C.apellido AS Cliente_Apellido, 
+    C.dni AS CUIL
+FROM POLIZA P 
+JOIN CLIENTE C ON P.id_cliente = C.cliente_id 
+WHERE P.estado = 'VIGENTE';
 
 
+-- Consulta B: Buscar bienes asegurados filtrando por una marca específica (ej. 'Oster')
+SELECT 
+    bien_id, 
+    nombre, 
+    tipo, 
+    modelo 
+FROM BIEN 
+WHERE marca = 'Oster';
 
--- ----------------------------------CONSULTAS DE MANIPULACION DE DATOS (DML)----------------------------------
 
--- Actualizar el Estado de una Póliza: Cambia el estado de la póliza 8003 de 'PENDIENTE' a 'VIGENTE' (simulando la aprobación final).
-UPDATE POLIZA SET estado = 'VIGENTE' WHERE poliza_id = 8003;
+-- Consulta C: Detalle integral de una póliza en particular (ej. 8001) mostrando Cliente y Bien
+SELECT 
+    P.poliza_id,
+    C.nombre AS Nombre_Cliente, 
+    C.apellido AS Apellido_Cliente, 
+    B.nombre AS Bien_Asegurado, 
+    B.marca AS Marca_Bien,
+    P.fecha_inicio, 
+    P.fecha_fin 
+FROM POLIZA P 
+JOIN CLIENTE C ON P.id_cliente = C.cliente_id 
+JOIN BIEN B ON P.id_bien = B.bien_id 
+WHERE P.poliza_id = 8001;
 
--- Actualizar Datos de un Cliente: Cambia el correo electrónico y la dirección de un cliente.
-UPDATE CLIENTE SET mail = 'nuevo.mail@empresa.com', direccion = 'Calle Falsa 123' WHERE cliente_id = 10;
 
--- Registrar un Nuevo Reclamo: Inserta un nuevo registro en la tabla RECLAMO asociado a una póliza existente (8002).
-INSERT INTO RECLAMO (reclamo_id, descripcion, estado, id_poliza) VALUES (3, 'Fallo al encender tras 6 meses de uso.', 'INICIADO', 8002);
+-- Consulta D: Pólizas en estado 'PENDIENTE' asociadas al cliente Martín Alderete
+SELECT 
+    P.poliza_id, 
+    B.nombre AS Bien_Asegurado,
+    B.marca,
+    B.modelo,
+    P.estado AS Estado_Poliza
+FROM POLIZA P 
+JOIN CLIENTE C ON P.id_cliente = C.cliente_id 
+JOIN BIEN B ON P.id_bien = B.bien_id 
+WHERE C.nombre = 'Martín' AND C.apellido = 'Alderete';
 
--- Eliminar un Bien no Asegurado: Elimina un bien que no tiene ninguna póliza asociada (en un sistema real, esto requeriría verificar que no haya FKs activas o que se eliminen las pólizas primero).
-DELETE FROM RECLAMO WHERE reclamo_id = 3;
+
+-- Consulta E: Listar mapeo general del sistema (Nombre completo de cliente, Bien y Estado de Póliza)
+SELECT 
+    C.nombre AS Cliente_Nombre, 
+    C.apellido AS Cliente_Apellido, 
+    B.nombre AS Objeto_Asegurado, 
+    P.estado AS Estado_Seguro
+FROM POLIZA P 
+JOIN CLIENTE C ON P.id_cliente = C.cliente_id 
+JOIN BIEN B ON P.id_bien = B.bien_id;
+
+
+-- ----------------------------------------------------------------------------
+-- 2. CONSULTAS DE MANIPULACIÓN DE DATOS (DML)
+-- ----------------------------------------------------------------------------
+
+-- Acción A: Modificar el estado de una póliza (Aprobación del estado PENDIENTE a VIGENTE)
+UPDATE POLIZA 
+SET estado = 'VIGENTE' 
+WHERE poliza_id = 8003;
+
+
+-- Acción B: Actualizar información de contacto de un cliente utilizando la consistencia de VARCHAR
+UPDATE CLIENTE 
+SET mail = 'martin.alderete.nuevo@mail.com', 
+    direccion = 'Av. Alem 1200, San Miguel de Tucumán',
+    telefono = '+543816677889'
+WHERE cliente_id = 30;
+
+
+-- Acción C: Registrar un nuevo reclamo técnico sobre una póliza existente
+INSERT INTO RECLAMO (reclamo_id, descripcion, estado, id_poliza) 
+VALUES (3, 'El motor de la batidora recalienta y genera olor a quemado a los 2 minutos de uso.', 'PENDIENTE', 8003);
